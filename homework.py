@@ -1,27 +1,46 @@
-#Diego Aguilera
-#The app will allow you to enter a students information to figure out to see if their gpa is enough to be in Honor Roll or the deans list
-while():
-       
-        lastname = input("Enter last name of student: ")
+from flask import Flask, request, jsonify
 
-        if lastname == "zzz":
+app = Flask(__name__)
 
-            print("Student processing records quit.")
-            break
+books = []
 
-        firstname = input("Enter first name of student: ")
+@app.route('/books', methods=['POST'])
+def create_book():
+    data = request.json
+    book = {
+        'id': len(books) + 1,
+        'book_name': data['book_name'],
+        'author': data['author'],
+        'publisher': data['publisher']
+    }
+    books.append(book)
+    return jsonify({'message': 'Book created', 'id': book['id']}), 201
 
-        while True:
-            gpa = input("Enter GPA of Student: ")
+@app.route('/books', methods=['GET'])
+def get_books():
+    return jsonify(books), 200
 
-            gpa_value = float(gpa)
+@app.route('/books/<int:id>', methods=['GET'])
+def get_book(id):
+    book = next((b for b in books if b['id'] == id), None)
+    return jsonify(book) if book else ('', 404)
 
-            if gpa_value >= 3.5:
-                print(firstname + " " + lastname + " made the Dean's List")
+@app.route('/books/<int:id>', methods=['PUT'])
+def update_book(id):
+    data = request.json
+    book = next((b for b in books if b['id'] == id), None)
+    if book:
+        book.update(data)
+        return jsonify({'message': 'Book updated', 'id': id}), 200
+    return ('', 404)
 
-            elif gpa_value < 3.5 and gpa_value >= 3.25:
-                print(firstname + " " + lastname + " made the Honor Roll")
+@app.route('/books/<int:id>', methods=['DELETE'])
+def delete_book(id):
+    book = next((b for b in books if b['id'] == id), None)
+    if book:
+        books.remove(book)
+        return ('', 204)
+    return ('', 404)
 
-            else:
-                print("Keep studying, " + firstname + " " + lastname + "!")
-            break
+if __name__ == '__main__':
+    app.run(debug=True)
